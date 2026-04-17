@@ -1,7 +1,12 @@
 /* eslint-disable react-hooks/static-components */
 import { useEffect, useState, useRef, useMemo } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
 } from "recharts";
 
 function App() {
@@ -11,13 +16,13 @@ function App() {
   useEffect(() => {
     const connectWebSocket = () => {
       const ws = new WebSocket(
-        "wss://q7662enf50.execute-api.us-east-1.amazonaws.com/production/"
+        "wss://y3blopfo58.execute-api.us-east-1.amazonaws.com/production/",
       );
 
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log("✅ WebSocket connected");
+        console.log("WebSocket connected");
       };
 
       ws.onmessage = (event) => {
@@ -27,11 +32,9 @@ function App() {
           setData((prev) => {
             let updated;
 
-            // 🔥 If Lambda sends full array
             if (Array.isArray(message)) {
               updated = message;
-            } 
-            // 🔥 If Lambda sends single item
+            }
             else {
               updated = [...prev, message];
             }
@@ -46,14 +49,13 @@ function App() {
             // keep last 30 points
             return sorted.slice(-30);
           });
-
         } catch (err) {
           console.error("Parse error:", err);
         }
       };
 
       ws.onclose = () => {
-        console.log("❌ WebSocket disconnected. Reconnecting...");
+        console.log("WebSocket disconnected.");
         setTimeout(connectWebSocket, 3000);
       };
 
@@ -70,10 +72,9 @@ function App() {
     };
   }, []);
 
-  // 🔥 FIX: Get the latest item based on timestamp, not array position
   const latest = useMemo(() => {
     if (data.length === 0) return {};
-    
+
     // Find the item with the maximum timestamp
     return data.reduce((max, item) => {
       const currentTime = Number(item.timestamp) || 0;
@@ -82,19 +83,15 @@ function App() {
     }, data[0]);
   }, [data]);
 
-  // Also keep the last item in array for backward compatibility
   const lastInArray = data[data.length - 1] || {};
 
-  // Debug: Compare both methods
   useEffect(() => {
-    console.log("📊 Last in array:", lastInArray);
-    console.log("📊 Latest by timestamp:", latest);
     if (lastInArray.timestamp !== latest.timestamp) {
-      console.warn("⚠️ Mismatch! Array not sorted by timestamp");
+      console.warn("Array not sorted by timestamp");
     }
   }, [latest, lastInArray]);
 
-  // 🔥 Threshold logic
+  // Threshold logic
   const isTempAlert = latest.temperature > 30;
   const isHumAlert = latest.humidity > 60;
   const isCO2Alert = latest.co2 > 1000;
@@ -102,30 +99,41 @@ function App() {
   const isGrainAlert = latest.grain_level < 70;
 
   const Card = ({ title, value, alert, timestamp }) => (
-    <div style={{
-      flex: "1 1 180px",
-      padding: "15px",
-      margin: "10px",
-      borderRadius: "12px",
-      background: alert ? "#ff4d4f" : "#f5f5f5",
-      color: "#000000", // Black text
-      textAlign: "center",
-      boxShadow: "0 4px 10px rgba(0,0,0,0.08)",
-      transition: "0.3s"
-    }}>
+    <div
+      style={{
+        flex: "1 1 160px",
+        padding: "16px",
+        margin: "6px",
+        borderRadius: "14px",
+        background: alert ? "#fcebeb" : "#fff",
+        border: alert ? "0.5px solid #f09595" : "0.5px solid #e8e8e8",
+        borderTop: alert ? "3px solid #e24b4a" : "3px solid #97c459",
+        textAlign: "center",
+      }}
+    >
       <h4 style={{ color: "#000000", margin: "0 0 10px 0" }}>{title}</h4>
       <h2 style={{ color: "#000000", margin: "0 0 5px 0" }}>
-        {value !== undefined ? (typeof value === 'number' ? value.toFixed(2) : value) : "--"}
+        {value !== undefined
+          ? typeof value === "number"
+            ? value.toFixed(2)
+            : value
+          : "--"}
       </h2>
-      {alert && <small style={{ display: 'block', marginTop: '5px', color: "#000000" }}>⚠️ Alert!</small>}
+      {alert && (
+        <small style={{ display: "block", marginTop: "5px", color: "#000000" }}>
+          Alert
+        </small>
+      )}
       {timestamp && (
-        <small style={{ 
-          display: 'block', 
-          marginTop: '5px', 
-          fontSize: '10px',
-          opacity: 0.7,
-          color: "#000000"
-        }}>
+        <small
+          style={{
+            display: "block",
+            marginTop: "5px",
+            fontSize: "10px",
+            opacity: 0.7,
+            color: "#000000",
+          }}
+        >
           {new Date(Number(timestamp)).toLocaleTimeString()}
         </small>
       )}
@@ -133,36 +141,31 @@ function App() {
   );
 
   const ChartBlock = ({ dataKey, title }) => (
-    <div style={{ 
-      width: "calc(33.333% - 20px)", 
-      minWidth: "370px",
-      height: 250, 
-      margin: "10px",
-      backgroundColor: "#ffffff",
-      borderRadius: "8px",
-      padding: "10px",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
-    }}>
+    <div
+      style={{
+        flex: "1 1 30%",
+        minWidth: "280px",
+        height: 240,
+        background: "#fff",
+        borderRadius: "14px",
+        border: "0.5px solid #e8e8e8",
+        padding: "16px",
+        borderTop: "3px solid #1890ff",
+      }}
+    >
       <h3 style={{ color: "#000000", margin: "0 0 10px 0" }}>{title}</h3>
       <ResponsiveContainer width="100%" height={200}>
         <LineChart data={data}>
           <XAxis
             dataKey="timestamp"
-            tickFormatter={(t) =>
-              new Date(Number(t)).toLocaleTimeString()
-            }
+            tickFormatter={(t) => new Date(Number(t)).toLocaleTimeString()}
             stroke="#000000"
-            tick={{ fill: '#000000' }}
+            tick={{ fill: "#000000" }}
           />
-          <YAxis 
-            stroke="#000000"
-            tick={{ fill: '#000000' }}
-          />
+          <YAxis stroke="#000000" tick={{ fill: "#000000" }} />
           <Tooltip
-            labelFormatter={(t) =>
-              new Date(Number(t)).toLocaleString()
-            }
-            contentStyle={{ color: '#000000' }}
+            labelFormatter={(t) => new Date(Number(t)).toLocaleString()}
+            contentStyle={{ color: "#000000" }}
           />
           <Line
             type="monotone"
@@ -182,85 +185,96 @@ function App() {
     { dataKey: "humidity", title: "Humidity Trend" },
     { dataKey: "co2", title: "CO2 Trend" },
     { dataKey: "vibration", title: "Vibration Trend" },
-    { dataKey: "grain_level", title: "Grain Level Trend" }
+    { dataKey: "grain_level", title: "Grain Level Trend" },
   ];
 
   return (
-    <div style={{
-      padding: "20px",
-      background: "#ffffff",
-      minHeight: "100vh",
-      fontFamily: "Arial",
-      color: "#000000"
-    }}>
-      <h1 style={{ color: "#000000" }}>🌾 Silo Monitoring Dashboard</h1>
-      
-      {/* Debug info - remove in production */}
-      <div style={{ 
-        background: '#f0f0f0', 
-        padding: '10px', 
-        marginBottom: '20px',
-        borderRadius: '5px',
-        fontSize: '12px',
-        color: '#000000'
-      }}>
-        <strong style={{ color: '#000000' }}>Debug:</strong> Data points: {data.length} | 
-        Latest timestamp: {latest.timestamp ? new Date(Number(latest.timestamp)).toLocaleString() : '--'}
+    <div
+      style={{
+        paddingLeft: "20px",
+        paddingRight: "20px",
+        paddingBottom: "20px",
+        background: "#ffffff",
+        minHeight: "100vh",
+        fontFamily: "Arial",
+        color: "#000000",
+      }}
+    >
+      <h1 style={{ color: "#000000" }}>Smart Grain Silo Monitoring System</h1>
+
+      <div
+        style={{
+          background: "#f0f0f0",
+          padding: "10px",
+          marginBottom: "20px",
+          borderRadius: "5px",
+          fontSize: "12px",
+          color: "#000000",
+        }}
+      >
+        Latest time:{" "}
+        {latest.timestamp
+          ? new Date(Number(latest.timestamp)).toLocaleString()
+          : "--"}
       </div>
 
-      {/* 🔥 Status Cards */}
-      <div style={{ 
-        display: "flex", 
-        flexWrap: "wrap",
-        justifyContent: "center",
-        marginBottom: "30px"
-      }}>
-        <Card 
-          title="Temperature (°C)" 
-          value={latest.temperature} 
+      {/* Status Cards */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          marginBottom: "30px",
+        }}
+      >
+        <Card
+          title="Temperature (°C)"
+          value={latest.temperature}
           alert={isTempAlert}
           timestamp={latest.timestamp}
         />
-        <Card 
-          title="Humidity (%)" 
-          value={latest.humidity} 
+        <Card
+          title="Humidity (%)"
+          value={latest.humidity}
           alert={isHumAlert}
           timestamp={latest.timestamp}
         />
-        <Card 
-          title="CO2 (ppm)" 
-          value={latest.co2} 
+        <Card
+          title="CO2 (ppm)"
+          value={latest.co2}
           alert={isCO2Alert}
           timestamp={latest.timestamp}
         />
-        <Card 
-          title="Vibration (g)" 
-          value={latest.vibration} 
+        <Card
+          title="Vibration (g)"
+          value={latest.vibration}
           alert={isVibAlert}
           timestamp={latest.timestamp}
         />
-        <Card 
-          title="Grain Level (%)" 
-          value={latest.grain_level} 
+        <Card
+          title="Grain Level (%)"
+          value={latest.grain_level}
           alert={isGrainAlert}
           timestamp={latest.timestamp}
         />
       </div>
 
-      {/* 📊 Charts Grid - 3 in first row, 2 in second row */}
-      <div style={{ 
-        display: "flex", 
-        flexWrap: "wrap",
-        justifyContent: "flex-start",
-        marginTop: "20px",
-        width: "max-content"
-      }}>
-        {charts.map((chart, index) => (
-          <ChartBlock 
-            key={chart.dataKey}
-            dataKey={chart.dataKey} 
-            title={chart.title} 
-          />
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "12px",
+          marginBottom: "12px",
+        }}
+      >
+        {charts.slice(0, 3).map((chart) => (
+          <ChartBlock key={chart.dataKey} {...chart} />
+        ))}
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
+        {charts.slice(3).map((chart) => (
+          <ChartBlock key={chart.dataKey} {...chart} />
         ))}
       </div>
     </div>

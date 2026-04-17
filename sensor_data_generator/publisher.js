@@ -4,11 +4,11 @@ const iot = awsIot.iot;
 const io = awsIot.io;
 
 // ------------------ CONFIG ------------------
-const endpoint = "a1qj8hpf44mgss-ats.iot.us-east-1.amazonaws.com";
-const cert = "./authfiles/certificate.pem.crt";
-const key = "./authfiles/private.pem.key";
-const ca = "./authfiles/AmazonRootCA1.pem";
-const clientId = "SiloSensorNode";
+const endpoint = "a24dj683s013de-ats.iot.us-east-1.amazonaws.com";
+const cert = "./authfiles/certificate1.pem.crt";
+const key = "./authfiles/private1.pem.key";
+const ca = "./authfiles/AmazonRootCA11.pem";
+const clientId = "siloNewThing";
 // --------------------------------------------
 
 const configBuilder =
@@ -33,12 +33,10 @@ function sleep(ms) {
 async function start() {
     try {
         await connection.connect();
-        console.log("✅ Connected to AWS IoT Core");
-
-        // generate data every 10 seconds
+        console.log("Connected to AWS IoT Core");
+ 
         setInterval(async () => {
 
-            // 1️⃣ DATA GENERATED
             const time = Date.now();
 
             const message = {
@@ -50,24 +48,20 @@ async function start() {
                 timestamp: time
             };
 
-            console.log("🧠 Data Generated:", message);
-
-            // 2️⃣ WAIT 5 seconds before sending
-            // await sleep(5000);
-
-            // 3️⃣ SEND TO AWS
+            console.log("Data Generated:", message);
+            // SEND TO AWS
             await connection.publish(
                 "silo/sensors",
                 JSON.stringify(message),
                 mqtt.QoS.AtLeastOnce
             );
 
-            console.log("📤 Sent after 5 sec:", message);
+            console.log(message);
 
-        }, 5000); // generate every 10 seconds
+        }, 5000);
 
     } catch (err) {
-        console.log("❌ Connection Error");
+        console.log("Connection Error");
         console.error(err);
     }
 }
