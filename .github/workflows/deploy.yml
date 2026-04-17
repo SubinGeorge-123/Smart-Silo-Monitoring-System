@@ -1,0 +1,49 @@
+name: Deploy React to S3
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Setup Node
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 3. Install deps
+      - name: Install dependencies
+        working-directory: frontendReact
+        run: npm install
+
+      # 4. Build
+      - name: Build project
+        working-directory: frontendReact
+        run: npm run build
+
+      # 5. AWS credentials
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          region: ${{ secrets.AWS_REGION }}
+
+      # 6. Deploy dist → S3
+      - name: Deploy to S3
+        run: |
+          aws s3 sync frontendReact/dist/ s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      # 7. Fix SPA routing
+      - name: Fix routing
+        run: |
+          aws s3 cp frontendReact/dist/index.html s3://${{ secrets.S3_BUCKET_NAME }}/404.html
